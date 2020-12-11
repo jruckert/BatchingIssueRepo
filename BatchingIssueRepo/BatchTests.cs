@@ -1,10 +1,10 @@
 ﻿using Hangfire;
-using Hangfire.MemoryStorage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Hangfire.InMemory;
 using TestImplementation;
 using Xunit;
 
@@ -42,7 +42,7 @@ namespace BatchingIssueRepo
 
         private IServiceProvider GenerateServiceProvider()
         {
-            JobStorage storage = new MemoryStorage();
+            JobStorage storage = new InMemoryStorage();
             var services = new ServiceCollection();
             services.AddTransient<IBackgroundJobManager, BackgroundJobManager>();
             services.AddSingleton(x =>
