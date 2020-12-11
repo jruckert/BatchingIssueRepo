@@ -1,10 +1,11 @@
 ﻿using Hangfire;
-using Hangfire.MemoryStorage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Hangfire.Common;
+using Hangfire.InMemory;
 using TestImplementation;
 using Xunit;
 
@@ -42,13 +43,14 @@ namespace BatchingIssueRepo
 
         private IServiceProvider GenerateServiceProvider()
         {
-            JobStorage storage = new MemoryStorage();
+            JobStorage storage = new InMemoryStorage();
             var services = new ServiceCollection();
             services.AddTransient<IBackgroundJobManager, BackgroundJobManager>();
             services.AddSingleton(x =>
             {
                 return storage;
             });
+            JobFilterProviders.Providers.Add(new HangfireClientFilterProvider());
             services.AddHangfire((provider, config) =>
             {
                 config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
@@ -56,14 +58,9 @@ namespace BatchingIssueRepo
                       .UseIgnoredAssemblyVersionTypeResolver()
                       .UseRecommendedSerializerSettings()                      
                       .UseStorage(storage)
-                      .UseBatches(); //TimeSpan.FromDays(7), filterProvider: new HangfireClientFilterProvider()                
+                      .UseBatches();
             });
-            services.AddHangfireServer(
-                options =>
-                {
-                    //options.FilterProvider = new HangfireClientFilterProvider();
-                }
-            );
+            services.AddHangfireServer();
             services.AddTransient<IBatchJobClient, BatchJobClient>();
             return services.BuildServiceProvider();
         }
